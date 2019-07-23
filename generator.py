@@ -23,6 +23,7 @@ FPS = 30
 INITIALIZATION_FRAME_SLACK = 90
 PANORAMIC_COUNT = 4
 PANORAMIC_FOV = 120
+CONFIGURATION_FILENAME = 'configuration.yml'
 
 maps = ['Town01', 'Town02', 'Town03', 'Town04', 'Town05', 'Town07']
 traffic_density = [50, 100, 200]
@@ -244,17 +245,14 @@ def is_complete(cameras, duration, start_time):
     return frame_count >= duration * FPS
 
 
-def generate_tile(path, id, tile, scale, resolution, duration, seed=None, hostname='localhost', port=2000, timeout=30):
+def generate_tile(client, path, id, tile, scale, resolution, duration):
     traffic_cameras = []
     panoramic_cameras = []
     vehicles = []
     walkers = []
     controllers = []
 
-    client = carla.Client(hostname, port)
-    client.set_timeout(timeout * 2)
     client.load_world(tile.map)
-    client.set_timeout(timeout)
 
     time.sleep(10)
 
@@ -291,7 +289,7 @@ def generate_tile(path, id, tile, scale, resolution, duration, seed=None, hostna
         try:
             [camera.close() for camera in traffic_cameras + panoramic_cameras]
             [camera.stop() for camera in traffic_cameras + panoramic_cameras]
-            #[controller.stop() for controller in world.get_actors([c.actor_id for c in controllers])]
+            [controller.stop() for controller in world.get_actors([c.actor_id for c in controllers])]
 
             client.apply_batch_sync([carla.command.DestroyActor(c) for c in traffic_cameras] +
                                     [carla.command.DestroyActor(c) for c in panoramic_cameras] +
@@ -335,10 +333,14 @@ def write_configuration(path, tiles, scale, resolution, duration, seed, hostname
             for tileid, tile in enumerate(tiles)],
     }
 
+    filename = os.path.join(path, CONFIGURATION_FILENAME)
+
     if not os.path.exists(path):
         os.makedirs(path)
+    if os.path.exists(filename):
+        os.replace(filename, filename + '.bak')
 
-    with open(os.path.join(path, 'configuration.yml'), 'w') as file:
+    with open(filename, 'w') as file:
         yaml.dump(configuration, file)
 
 
@@ -346,12 +348,15 @@ def generate(path, tiles, scale, resolution, duration, seed=None, hostname='loca
     random.seed(seed)
     write_configuration(path, [], scale, resolution, duration, seed, hostname, port, timeout)
 
+    client = carla.Client(hostname, port)
+    client.set_timeout(timeout)
     used_tiles = []
+
     for id in range(scale * TILES_SCALE_MULTIPLIER):
         used_tiles.append(random.choice(tiles))
         logging.info(used_tiles[-1])
         write_configuration(path, used_tiles, scale, resolution, duration, seed, hostname, port, timeout)
-        generate_tile(path, id, used_tiles[-1], scale, resolution, duration, seed, hostname, port, timeout)
+        generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration)
 
     transcode_videos(path)
 

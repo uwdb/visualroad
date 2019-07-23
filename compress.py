@@ -13,7 +13,8 @@ def transcode_video(input_filename, output_filename):
                        '-i', input_filename,
                        '-codec', 'h264',
                        output_filename]).returncode == 0:
-        os.remove(input_filename)
+        #os.remove(input_filename)
+        pass
 
 
 def transcode_videos(path):
