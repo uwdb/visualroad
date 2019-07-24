@@ -344,8 +344,7 @@ def transcode_video(input_filename, output_filename):
                            '-i', input_filename,
                            '-codec', 'h264',
                            output_filename]).returncode == 0:
-            pass
-            #os.remove(input_filename)
+            os.remove(input_filename)
     except e:
         logging.error(e)
 
