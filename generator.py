@@ -13,42 +13,13 @@ import cv2
 import argparse
 import yaml
 import logging
-
-VERSION = 1.0
-TILES_SCALE_MULTIPLIER = 1
-TRAFFIC_CAMERAS_PER_TILE = 4
-PANORAMIC_CAMERAS_PER_TILE = 1
-CAMERA_HEIGHT = 4
-FPS = 30
-INITIALIZATION_FRAME_SLACK = 90
-PANORAMIC_COUNT = 4
-PANORAMIC_FOV = 120
-CONFIGURATION_FILENAME = 'configuration.yml'
-
-maps = ['Town01', 'Town02', 'Town03', 'Town04', 'Town05', 'Town07']
-traffic_density = [50, 100, 200]
-pedestrian_density = [100, 250, 400]
-weather = [
-    carla.WeatherParameters.Default,
-    carla.WeatherParameters.ClearNoon,
-    carla.WeatherParameters.CloudyNoon,
-    carla.WeatherParameters.WetNoon,
-    carla.WeatherParameters.WetCloudyNoon,
-    carla.WeatherParameters.MidRainyNoon,
-    carla.WeatherParameters.HardRainNoon,
-    carla.WeatherParameters.SoftRainNoon,
-    carla.WeatherParameters.ClearSunset,
-    carla.WeatherParameters.CloudySunset,
-    carla.WeatherParameters.WetSunset,
-    carla.WeatherParameters.WetCloudySunset,
-    carla.WeatherParameters.MidRainSunset,
-    carla.WeatherParameters.HardRainSunset,
-    carla.WeatherParameters.SoftRainSunset]
+from common import *
 
 
 class Configuration:
-    def __init__(self, client, path, scale, resolution, duration, vehicle_locations, walker_locations, traffic_camera_locations, panoramic_camera_locations):
+    def __init__(self, client, id, path, scale, resolution, duration, vehicle_locations, walker_locations, traffic_camera_locations, panoramic_camera_locations):
         self.client = client
+        self.id = id
         self.world = client.get_world()
         self.path = path
         self.scale = scale
@@ -163,9 +134,10 @@ def create_semantic_camera(configuration, id, transform, prefix='traffic'):
 
 def create_traffic_cameras(configuration):
     cameras = []
+    tile_base_id = configuration.id * TRAFFIC_CAMERAS_PER_TILE
     for id in range(TRAFFIC_CAMERAS_PER_TILE): # scale * TRAFFIC_SCALE_MULTIPLIER):
-        cameras.append(create_camera(configuration, 'traffic', id))
-        cameras.append(create_semantic_camera(configuration, id, transform=cameras[-1].requested_transform))
+        cameras.append(create_camera(configuration, 'traffic', tile_base_id + id))
+        cameras.append(create_semantic_camera(configuration, tile_base_id + id, transform=cameras[-1].requested_transform))
     return cameras
 
 
@@ -182,7 +154,7 @@ def create_panoramic_camera(configuration, id):
 def create_panoramic_cameras(configuration):
     cameras = []
     for id in range(PANORAMIC_CAMERAS_PER_TILE): #scale * PANORAMIC_SCALE_MULTIPLIER):
-        cameras += create_panoramic_camera(configuration, id)
+        cameras += create_panoramic_camera(configuration, configuration.id + id)
     return cameras
 
 
@@ -237,11 +209,11 @@ def start_walker(configuration, controller, index):
     controller.set_max_speed(1 + random.random())
 
 
-def is_complete(cameras, duration, start_time):
+def is_complete(id, scale, cameras, duration, start_time):
     frame_count = max(0, min([camera.count[0] for camera in cameras]))
     total_frames = duration * FPS
     fps = max(frame_count / (time.time() - start_time + 0.00001), 0)
-    logging.info('Rendered %d frames; %d remaining (%.1f FPS)', frame_count, total_frames - frame_count, fps)
+    logging.info('Tile %d of %d: Rendered %d frames; %d remaining (%.1f FPS)', id + 1, scale, frame_count, total_frames - frame_count, fps)
     return frame_count >= duration * FPS
 
 
@@ -264,6 +236,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
 
     configuration = Configuration(
         client,
+        id=id,
         path=path,
         scale=scale,
         resolution=resolution,
@@ -280,7 +253,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
         traffic_cameras = create_traffic_cameras(configuration)
         panoramic_cameras = create_panoramic_cameras(configuration)
 
-        while not is_complete(traffic_cameras + panoramic_cameras, duration, start_time):
+        while not is_complete(id, scale, traffic_cameras + panoramic_cameras, duration, start_time):
             [world.tick() for _ in range(10)]
 
     finally:
@@ -289,14 +262,14 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
         try:
             [camera.close() for camera in traffic_cameras + panoramic_cameras]
             [camera.stop() for camera in traffic_cameras + panoramic_cameras]
-            [controller.stop() for controller in world.get_actors([c.actor_id for c in controllers])]
+            #[controller.stop() for controller in world.get_actors([c.actor_id for c in controllers])]
 
             client.apply_batch_sync([carla.command.DestroyActor(c) for c in traffic_cameras] +
                                     [carla.command.DestroyActor(c) for c in panoramic_cameras] +
                                     [carla.command.DestroyActor(v.actor_id) for v in vehicles] +
                                     [carla.command.DestroyActor(c.actor_id) for c in controllers] +
                                     [carla.command.DestroyActor(w.actor_id) for w in walkers])
-        except RuntimeError:
+        except RuntimeError as e:
             logging.error(e)
 
     logging.info('Generation complete for tile %d', id)
@@ -305,6 +278,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
 def write_configuration(path, tiles, scale, resolution, duration, seed, hostname, port, timeout):
     configuration = {
         'version': VERSION,
+        'name': os.path.basename(path),
         'scale': scale,
         'resolution': {'width': resolution[0], 'height': resolution[1]},
         'duration': duration,
@@ -370,7 +344,8 @@ def transcode_video(input_filename, output_filename):
                            '-i', input_filename,
                            '-codec', 'h264',
                            output_filename]).returncode == 0:
-            os.remove(input_filename)
+            pass
+            #os.remove(input_filename)
     except e:
         logging.error(e)
 
