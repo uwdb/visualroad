@@ -1,5 +1,7 @@
 # Visual Road: A Video Data Management Benchmark
 
+Please see the [project website](http://visualroad.uwdb.io) for more details about the benchmark, links to the papers, sample videos, and pregenerated datasets.
+
 ## Synthetic Dataset Generation
 
 1. Build the `ue4-docker:4.22.0` container using the [ue4-docker build instructions](https://adamrehn.com/docs/ue4-docker/read-these-first/introduction-to-ue4-docker).  Visual Road depends on Unreal version 4.22.0 and only supports Linux builds.
