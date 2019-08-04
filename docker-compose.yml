@@ -1,8 +1,27 @@
 version: "2.3"
 
 services:
-  benchmark:
+  generator:
     image: visualroad/core:latest
+    runtime: nvidia
+    working_dir: /app
     volumes:
       - .:/app
+    entrypoint: python3 /home/ue4/visualroad/generator.py
+
+  driver:
+    image: visualroad/core:latest
     runtime: nvidia
+    working_dir: /app
+    volumes:
+      - .:/app
+    entrypoint: python3 /home/ue4/visualroad/driver.py
+
+  verifier:
+    image: visualroad/core:latest
+    runtime: nvidia
+    working_dir: /app
+    volumes:
+      - .:/app
+    entrypoint: python3 /home/ue4/visualroad/verifier.py
+
