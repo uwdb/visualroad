@@ -2,7 +2,9 @@
 
 Please see the [project website](http://visualroad.uwdb.io) for more details about the benchmark, links to the papers, sample videos, and pregenerated datasets.
 
-## Prerequisites & building the Visual Road image
+## Building the Visual Road Docker Image
+
+Because of licensing restrictions on the Unreal engine, we cannot release a pre-built Docker container for the Visual Road benchmark.  However, we have striven to make the build process as painless as possible!
 
 1. Download and build the `ue4-docker:4.22.0` container using the [ue4-docker build instructions](https://adamrehn.com/docs/ue4-docker/read-these-first/introduction-to-ue4-docker).  Visual Road depends on Unreal version 4.22.0 and only supports Linux builds.
 2. Clone the [Visual Road repository](https://github.com/uwdb/visualroad) and build the core docker container: `docker build -t visualroad/core`
