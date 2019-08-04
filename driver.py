@@ -189,10 +189,19 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '-r', '--seed',
+        metavar='R',
+        default=0,
+        type=int,
+        help='Random number generator seed')
+    parser.add_argument(
         'path',
         type=str,
         help='Video dataset path')
     args = parser.parse_args()
+
+    if args.seed:
+        random.seed(args.seed)
 
     configuration = load_configuration(args.path)
     print(benchmark(args.path,

@@ -1,6 +1,12 @@
+import time
 import os
+import subprocess
+import signal
+import psutil
 import carla
 import yaml
+import logging
+import glob
 
 VERSION = 1.0
 QUERIES_PER_TILE = 4
@@ -13,8 +19,10 @@ INITIALIZATION_FRAME_SLACK = 90
 PANORAMIC_COUNT = 4
 PANORAMIC_FOV = 120
 CONFIGURATION_FILENAME = 'configuration.yml'
-LICENSEPLATE_TEXTURE_PATH = '~/carla/Unreal/CarlaUE4/Content/Carla/Static/GenericMaterials/Licenseplates/Textures'
 LOSSLESS_PSNR_THRESHOLD = 40
+
+CARLA_PROCESS_NAME = 'CarlaUE4'
+LICENSEPLATE_TEXTURE_PATH = '~/carla/Unreal/CarlaUE4/Content/Carla/Static/GenericMaterials/Licenseplates/Textures'
 
 maps = ['Town01', 'Town02', 'Town03', 'Town04', 'Town05', 'Town07']
 traffic_density = [50, 100, 200]
@@ -42,3 +50,49 @@ def load_configuration(path):
         configuration = yaml.safe_load(stream)
         configuration['path'] = path
         return configuration
+
+
+def is_carla_running():
+    return any([p for p in psutil.process_iter(attrs=['name'])
+                if p.info['name'] == 'CarlaUE4'])
+
+
+def start_carla(seed, fps=30, quality='Epic', executable=None):
+    if is_carla_running():
+        stop_carla()
+
+    executable = executable or os.environ['CARLA_EXECUTABLE']
+    subprocess.Popen([executable,
+                      '-benchmark',
+                      '-fps=%d' % fps,
+                      '-quality-level=%s' % quality,
+                      '-fixedseed=%d' % int(seed)], cwd=os.path.dirname(executable))
+    time.sleep(20)
+
+
+def stop_carla():
+    if is_carla_running():
+        process = next(p for p in psutil.process_iter(attrs=['name'])
+                       if p.info['name'] == 'CarlaUE4')
+        process.send_signal(signal.SIGINT)
+        time.sleep(20)
+
+
+def transcode_video(input_filename, output_filename):
+    logging.info("Compressing " + input_filename)
+
+    try:
+        if subprocess.call(['ffmpeg',
+                            '-y',
+                            '-i', input_filename,
+                            '-codec', 'h264',
+                            output_filename]) == 0:
+            os.remove(input_filename)
+    except e:
+        logging.error(e)
+
+
+def transcode_videos(path):
+    logging.info("Compressing dataset %s", path)
+    for filename in glob.glob(os.path.join(path, '*.mp4')):
+        transcode_video(filename, filename.replace('_', ''))

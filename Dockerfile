@@ -5,10 +5,14 @@ ARG CARLA_VERSION=master
 ARG CARLA_REPOSITORY=https://github.com/carla-simulator/carla
 
 ENV CARLA_PATH=/home/ue4/carla
+ENV CARLA_EXECUTABLE=$CARLA_PATH/Unreal/CarlaUE4/Saved/StagedBuilds/LinuxNoEditor/CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping
 
 ENV UNREAL_VERSION=4.22
 ENV UNREAL_PATH=/home/ue4/UnrealEngine
 ENV UE4_ROOT $UNREAL_PATH
+
+ARG VISUALROAD_VERSION=master
+ENV VISUALROAD_PATH=/home/ue4/visualroad
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -17,6 +21,7 @@ ENV DEBIAN_FRONTEND noninteractive
 USER root
 
 # Install apt dependencies
+RUN apt-get update
 RUN apt-get install \
         -y \
         --no-install-recommends \
@@ -53,7 +58,7 @@ RUN apt-get install \
       git \
       ffmpeg
 
-# Install clang-7
+# Install clang
 RUN apt-get install -y clang-7 lld-7 && \
     update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-7/bin/clang++ 170 && \
     update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-7/bin/clang 170
@@ -63,8 +68,8 @@ RUN apt-get install -y clang-7 lld-7 && \
 USER ue4
 
 # Ensure yaml, opencv
-RUN pip2 install --user pyyaml opencv-python & \
-    pip3 install --user pyyaml opencv-python
+RUN pip2 install --user pyyaml opencv-python psutil & \
+    pip3 install --user pyyaml opencv-python psutil
 
 # Build Carla
 RUN git clone https://github.com/carla-simulator/carla $CARLA_PATH && \
@@ -76,5 +81,10 @@ RUN git clone https://github.com/carla-simulator/carla $CARLA_PATH && \
 # Install Carla Python API
 RUN pip2 install --user --upgrade --ignore-installed -e $CARLA_PATH/PythonAPI/carla & \
     pip3 install --user --upgrade --ignore-installed -e $CARLA_PATH/PythonAPI/carla
+
+# Install Visual Road
+RUN git clone https://github.com/uwdb/visualroad.git $VISUALROAD_PATH && \
+    cd $VISUALROAD_PATH && \
+    git checkout $VISUALROAD_VERSION
 
 WORKDIR /app

@@ -320,39 +320,25 @@ def write_configuration(path, tiles, scale, resolution, duration, seed, hostname
 
 def generate(path, tiles, scale, resolution, duration, seed=None, hostname='localhost', port=2000, timeout=30):
     random.seed(seed)
-    write_configuration(path, [], scale, resolution, duration, seed, hostname, port, timeout)
-
-    client = carla.Client(hostname, port)
-    client.set_timeout(timeout)
-    used_tiles = []
-
-    for id in range(scale * TILES_SCALE_MULTIPLIER):
-        used_tiles.append(random.choice(tiles))
-        logging.info(used_tiles[-1])
-        write_configuration(path, used_tiles, scale, resolution, duration, seed, hostname, port, timeout)
-        generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration)
-
-    transcode_videos(path)
-
-
-def transcode_video(input_filename, output_filename):
-    logging.info("Compressing " + input_filename)
 
     try:
-        if subprocess.run(['ffmpeg',
-                           '-y',
-                           '-i', input_filename,
-                           '-codec', 'h264',
-                           output_filename]).returncode == 0:
-            os.remove(input_filename)
-    except e:
-        logging.error(e)
+        start_carla(seed)
 
+        write_configuration(path, [], scale, resolution, duration, seed, hostname, port, timeout)
 
-def transcode_videos(path):
-    logging.info("Compressing dataset %s", path)
-    for filename in glob.glob(os.path.join(path, '*.mp4')):
-        transcode_video(filename, filename.replace('_', ''))
+        client = carla.Client(hostname, port)
+        client.set_timeout(timeout)
+        used_tiles = []
+
+        for id in range(scale * TILES_SCALE_MULTIPLIER):
+            used_tiles.append(random.choice(tiles))
+            logging.info(used_tiles[-1])
+            write_configuration(path, used_tiles, scale, resolution, duration, seed, hostname, port, timeout)
+            generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration)
+
+        transcode_videos(path)
+    finally:
+        stop_carla()
 
 
 if __name__ == '__main__':
@@ -403,4 +389,4 @@ if __name__ == '__main__':
         help='Dataset output path')
     args = parser.parse_args()
 
-    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.seed or None)
+    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.seed)
