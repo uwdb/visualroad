@@ -44,6 +44,7 @@ batches:
       y:
       - 825
       - 902
+...
 ```
 
 ## Verifying Query Results
