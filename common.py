@@ -73,7 +73,7 @@ def start_carla(seed, fps=30, quality='Epic', executable=None):
 def stop_carla():
     if is_carla_running():
         process = next(p for p in psutil.process_iter(attrs=['name'])
-                       if p.info['name'] == 'CarlaUE4')
+                       if p.info['name'] == os.path.basename(os.environ['CARLA_EXECUTABLE']))
         process.send_signal(signal.SIGINT)
         time.sleep(20)
 
