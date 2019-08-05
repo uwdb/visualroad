@@ -72,3 +72,7 @@ batches:
 ```
 
 2. The verifier may be applied to datasets other than the one on which the driver was executed.  To do so, execute the verifier with the `--dataset` option.  See the verifier help (`-h`) for other options.
+
+## Share your configuration!
+
+If you've generated a dataset and would like to share its configuration with the world, please [post it here](https://github.com/uwdb/visualroad/issues/new?labels=Benchmark+Configuration&template=benchmark-configuration.md) with the details!  To view a list of existing dataset configurations, please [click here](https://github.com/uwdb/visualroad/issues?q=label%3A%22Benchmark+Configuration).
