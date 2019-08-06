@@ -4,10 +4,37 @@ Please see the [project website](http://visualroad.uwdb.io) for more details abo
 
 ## Building the Visual Road Docker Image
 
-Because of licensing restrictions on the Unreal engine, we cannot release a pre-built Docker container for the Visual Road benchmark.  However, we have striven to make the build process as painless as possible!
+Because of licensing restrictions on the Unreal engine, we cannot release a pre-built Docker container for the Visual Road benchmark.  However, we have striven to make the build process as painless as possible!  Note that Visual Road depends on Unreal version 4.22.0 and only supports Linux builds.
 
-1. Download and build the `ue4-docker:4.22.0` container using the [ue4-docker build instructions](https://adamrehn.com/docs/ue4-docker/read-these-first/introduction-to-ue4-docker).  Visual Road depends on Unreal version 4.22.0 and only supports Linux builds.
-2. Clone the [Visual Road repository](https://github.com/uwdb/visualroad) and build the core docker container: `docker build -t visualroad/core`
+1. Install [Docker CE](https://docs.docker.com/install/linux/docker-ce/), if not already installed.
+2. Install [Python 3.6](https://www.python.org/downloads/) or later, if not already installed:
+
+```sh
+sudo apt-get install python3 python3-dev python3-pip
+```
+
+3. Install `ue4-docker` version 0.0.34 or later:
+
+```sh
+sudo pip3 install ue4-docker
+sudo ue4-docker setup
+``` 
+
+4. You will need an Unreal Engine account in order for `ue4-docker` to be able to download the engine.  If you don't already have an account, [create one](https://accounts.unrealengine.com/login).
+
+5. Build the `ue4-engine:4.22.0` image using `ue4-docker` and CUDA version 9.2.  You will be prompted for your Unreal Engine account information from the previous step in order to build the engine:
+
+```sh
+ue4-docker build --cuda=9.2 --pull-prerequisites --no-minimal --no-full --exclude=debug --exclude=templates 4.22.0
+```
+
+6. Clone the [Visual Road repository](https://github.com/uwdb/visualroad) and build the benchmark image:
+
+```sh
+git clone https://github.com/uwdb/visualroad
+cd visualroad
+docker build -t visualroad/core
+```
 
 ## Synthetic Dataset Generation
 
