@@ -103,3 +103,24 @@ batches:
 ## Share your configuration!
 
 If you've generated a dataset and would like to share its configuration with the world, please [post it here](https://github.com/uwdb/visualroad/issues/new?labels=Benchmark+Configuration&template=benchmark-configuration.md) with the details!  To view a list of existing dataset configurations, please [click here](https://github.com/uwdb/visualroad/issues?q=label%3A%22Benchmark+Configuration%22).
+
+## Citations & Paper
+
+If you use Visual Road, please cite our SIGMOD'19 paper:
+
+Visual Road: A Video Data Management Benchmark
+Brandon Haynes, Amrita Mazumdar, Magdalena Balazinska, Luis Ceze, Alvin Cheung
+SIGMOD:972-987 [[PDF]](https://dl.acm.org/citation.cfm?doid=3299869.3324955)
+
+```
+@inproceedings{DBLP:conf/sigmod/HaynesMBCC19,
+  author    = {Brandon Haynes and Amrita Mazumdar and Magdalena Balazinska and Luis Ceze and Alvin Cheung},
+  title     = {Visual Road: {A} Video Data Management Benchmark},
+  booktitle = {{SIGMOD}},
+  pages     = {972--987},
+  year      = {2019},
+  doi       = {10.1145/3299869.3324955},
+}
+```
+
+See the [project website](http://visualroad.uwdb.io) for more details about the benchmark and related papers.
