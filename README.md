@@ -108,10 +108,8 @@ If you've generated a dataset and would like to share its configuration with the
 
 If you use Visual Road, please cite our SIGMOD'19 paper:
 
-Visual Road: A Video Data Management Benchmark
-
-Brandon Haynes, Amrita Mazumdar, Magdalena Balazinska, Luis Ceze, Alvin Cheung
-
+_Visual Road: A Video Data Management Benchmark_<br />
+Brandon Haynes, Amrita Mazumdar, Magdalena Balazinska, Luis Ceze, Alvin Cheung<br />
 SIGMOD:972-987 [[PDF]](https://dl.acm.org/citation.cfm?doid=3299869.3324955)
 
 ```
