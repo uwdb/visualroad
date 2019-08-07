@@ -20,6 +20,7 @@ PANORAMIC_COUNT = 4
 PANORAMIC_FOV = 120
 CONFIGURATION_FILENAME = 'configuration.yml'
 LOSSLESS_PSNR_THRESHOLD = 40
+FRAME_DELTA_SECONDS = 0.04
 
 CARLA_PROCESS_NAME = 'CarlaUE4'
 LICENSEPLATE_TEXTURE_PATH = '~/carla/Unreal/CarlaUE4/Content/Carla/Static/GenericMaterials/Licenseplates/Textures'

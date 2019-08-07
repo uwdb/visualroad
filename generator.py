@@ -231,6 +231,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
     world.set_weather(tile.weather)
     settings = world.get_settings()
     settings.synchronous_mode = True
+    settings.fixed_delta_seconds = FRAME_DELTA_SECONDS
     world.apply_settings(settings)
 
     configuration = Configuration(
