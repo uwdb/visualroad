@@ -81,7 +81,6 @@ def create_listener(configuration, type, id):
     count = [-INITIALIZATION_FRAME_SLACK]
     writer = [cv2.VideoWriter(os.path.join(configuration.path, '_%s-%03d.mp4' % (type, id)),
                              cv2.VideoWriter_fourcc(*'mp4v'), FPS, configuration.resolution)]
-    #writer = cv2.VideoWriter(os.path.join(OUTPUT_PATH, '%03d.avi' % id), cv2.VideoWriter_fourcc(*'DIVX'), 30, resolution)
 
     def close():
         count[0] = float("-inf")
@@ -388,5 +387,8 @@ if __name__ == '__main__':
         'path',
         help='Dataset output path')
     args = parser.parse_args()
+
+    if not os.path.isabs(args.path):
+        args.path = os.path.join(os.environ['OUTPUT_PATH'], args.path)
 
     generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.seed)

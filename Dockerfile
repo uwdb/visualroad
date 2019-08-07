@@ -1,6 +1,8 @@
 FROM adamrehn/ue4-engine:4.22.0
 MAINTAINER Brandon Haynes "bhaynes@cs.washington.edu"
 
+ENV OUTPUT_PATH=/app
+
 ARG CARLA_VERSION=0.9.6
 ARG CARLA_REPOSITORY=https://github.com/carla-simulator/carla
 
