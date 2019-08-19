@@ -119,6 +119,8 @@ def create_camera(configuration, type, id, transform=None, fov=90, yaw=None, loc
         transform.location += carla.Location(z=CAMERA_HEIGHT)
         transform.rotation.yaw = yaw or transform.rotation.yaw
         transform.rotation.yaw += random.randint(-fov/2, fov/2) + random.choice([0, 180])
+    else:
+        transform.rotation.yaw = yaw or transform.rotation.yaw
 
     camera = configuration.world.spawn_actor(blueprint, transform)
     listener = create_listener(configuration, type, id)
