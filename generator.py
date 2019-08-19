@@ -17,7 +17,7 @@ from common import *
 
 
 class Configuration:
-    def __init__(self, client, id, path, scale, resolution, duration, vehicle_locations, walker_locations, traffic_camera_locations, panoramic_camera_locations):
+    def __init__(self, client, id, path, scale, resolution, duration, panorama_fov, vehicle_locations, walker_locations, traffic_camera_locations, panoramic_camera_locations):
         self.client = client
         self.id = id
         self.world = client.get_world()
@@ -25,6 +25,7 @@ class Configuration:
         self.scale = scale
         self.resolution = resolution
         self.duration = duration
+        self.panorama_fov = panorama_fov
         self.all_walker_locations = self._shuffle([location for location in walker_locations])
         self.remaining_vehicle_locations = self._shuffle(list(vehicle_locations))
         self.remaining_walker_locations = self.all_walker_locations
@@ -143,9 +144,10 @@ def create_traffic_cameras(configuration):
 def create_panoramic_camera(configuration, id):
     cameras = []
     yaw = random.randint(0, 360)
+    transform = carla.Transform(location=configuration.next_panoramic_camera_location())
     for sub_id in range(PANORAMIC_COUNT):
-        cameras.append(create_camera(configuration, 'panoramic-%03d' % id, sub_id, fov=PANORAMIC_FOV, yaw=yaw))
-        cameras.append(create_semantic_camera(configuration, sub_id, prefix='panoramic-%03d' % id, transform=cameras[-1].requested_transform))
+        cameras.append(create_camera(configuration, 'panoramic-%03d' % id, sub_id, transform=transform, fov=configuration.panorama_fov, yaw=yaw))
+        cameras.append(create_semantic_camera(configuration, sub_id, prefix='panoramic-%03d' % id, transform=transform))
         yaw += 360 / PANORAMIC_COUNT
     return cameras
 
@@ -216,7 +218,7 @@ def is_complete(id, scale, cameras, duration, start_time):
     return frame_count >= duration * FPS
 
 
-def generate_tile(client, path, id, tile, scale, resolution, duration):
+def generate_tile(client, path, id, tile, scale, resolution, duration, panorama_fov):
     traffic_cameras = []
     panoramic_cameras = []
     vehicles = []
@@ -241,6 +243,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
         scale=scale,
         resolution=resolution,
         duration=duration,
+        panorama_fov=panorama_fov,
         vehicle_locations=world.get_map().get_spawn_points(),
         walker_locations=Configuration.draw_n(world.get_random_location_from_navigation, tile.walkers),
         traffic_camera_locations=world.get_map().get_spawn_points(),
@@ -275,13 +278,14 @@ def generate_tile(client, path, id, tile, scale, resolution, duration):
     logging.info('Generation complete for tile %d', id)
 
 
-def write_configuration(path, tiles, scale, resolution, duration, seed, hostname, port, timeout):
+def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, seed, hostname, port, timeout):
     configuration = {
         'version': VERSION,
         'name': os.path.basename(path),
         'scale': scale,
         'resolution': {'width': resolution[0], 'height': resolution[1]},
         'duration': duration,
+        'panorama_fov': panorama_fov,
         'seed': seed,
         'hostname': hostname,
         'port': port,
@@ -318,13 +322,13 @@ def write_configuration(path, tiles, scale, resolution, duration, seed, hostname
         yaml.dump(configuration, file)
 
 
-def generate(path, tiles, scale, resolution, duration, seed=None, hostname='localhost', port=2000, timeout=30):
+def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, hostname='localhost', port=2000, timeout=30):
     random.seed(seed)
 
     try:
         start_carla(seed)
 
-        write_configuration(path, [], scale, resolution, duration, seed, hostname, port, timeout)
+        write_configuration(path, [], scale, resolution, duration, panorama_fov, seed, hostname, port, timeout)
 
         client = carla.Client(hostname, port)
         client.set_timeout(timeout)
@@ -333,8 +337,8 @@ def generate(path, tiles, scale, resolution, duration, seed=None, hostname='loca
         for id in range(scale * TILES_SCALE_MULTIPLIER):
             used_tiles.append(random.choice(tiles))
             logging.info(used_tiles[-1])
-            write_configuration(path, used_tiles, scale, resolution, duration, seed, hostname, port, timeout)
-            generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration)
+            write_configuration(path, used_tiles, scale, resolution, duration, panorama_fov, seed, hostname, port, timeout)
+            generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration, panorama_fov)
 
         transcode_videos(path)
     finally:
@@ -376,6 +380,12 @@ if __name__ == '__main__':
         type=int,
         help='Random number generator seed')
     parser.add_argument(
+        '-f', '--fov',
+        metavar='FOV',
+        default=120,
+        type=int,
+        help='Field of view of panoramic cameras')
+    parser.add_argument(
         '-o', '--hostname',
         default='localhost',
         help='Server engine hostname')
@@ -392,4 +402,4 @@ if __name__ == '__main__':
     if not os.path.isabs(args.path):
         args.path = os.path.join(os.environ['OUTPUT_PATH'], args.path)
 
-    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.seed)
+    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.fov, args.seed)
