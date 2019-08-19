@@ -45,7 +45,9 @@ class Configuration:
         return self.remaining_traffic_camera_locations.pop()
 
     def next_panoramic_camera_location(self):
-        return self.remaining_panoramic_camera_locations.pop()
+        location = self.remaining_panoramic_camera_locations.pop()
+        location.z = CAMERA_HEIGHT
+        return location
 
     @staticmethod
     def _shuffle(l):
