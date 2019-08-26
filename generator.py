@@ -25,7 +25,7 @@ class Configuration:
         self.scale = scale
         self.resolution = resolution
         self.duration = duration
-        self.panorama_fov = panorama_fov
+        self.panorama_fov = panorama_fov or PANORAMIC_FOV
         self.all_walker_locations = self._shuffle([location for location in walker_locations])
         self.remaining_vehicle_locations = self._shuffle(list(vehicle_locations))
         self.remaining_walker_locations = self.all_walker_locations
@@ -386,7 +386,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-f', '--fov',
         metavar='FOV',
-        default=120,
+        default=None,
         type=int,
         help='Field of view of panoramic cameras')
     parser.add_argument(
