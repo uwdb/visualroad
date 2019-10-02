@@ -21,11 +21,12 @@ PANORAMIC_FOV = 120
 CONFIGURATION_FILENAME = 'configuration.yml'
 LOSSLESS_PSNR_THRESHOLD = 40
 FRAME_DELTA_SECONDS = 0.04
+JITTER_LIMIT = 3.0
 
 CARLA_PROCESS_NAME = 'CarlaUE4'
 LICENSEPLATE_TEXTURE_PATH = '~/carla/Unreal/CarlaUE4/Content/Carla/Static/GenericMaterials/Licenseplates/Textures'
 
-maps = ['Town01', 'Town02', 'Town03', 'Town04', 'Town05', 'Town07']
+maps = ['Town01', 'Town02', 'Town03', 'Town04', 'Town05']
 traffic_density = [50, 100, 200]
 pedestrian_density = [100, 250, 400]
 weather = [
