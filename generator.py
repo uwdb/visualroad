@@ -17,7 +17,7 @@ from common import *
 
 
 class Configuration:
-    def __init__(self, client, id, path, scale, resolution, duration, panorama_fov, vehicle_locations, walker_locations, traffic_camera_locations, panoramic_camera_locations):
+    def __init__(self, client, id, path, scale, resolution, duration, panorama_fov, jitter_sigma, vehicle_locations, walker_locations, traffic_camera_locations, panoramic_camera_locations):
         self.client = client
         self.id = id
         self.world = client.get_world()
@@ -26,6 +26,7 @@ class Configuration:
         self.resolution = resolution
         self.duration = duration
         self.panorama_fov = panorama_fov or PANORAMIC_FOV
+        self.jitter_sigma = jitter_sigma or DEFAULT_JITTER
         self.all_walker_locations = self._shuffle([location for location in walker_locations])
         self.remaining_vehicle_locations = self._shuffle(list(vehicle_locations))
         self.remaining_walker_locations = self.all_walker_locations
@@ -127,6 +128,7 @@ def create_camera(configuration, type, id, transform=None, fov=90, yaw=None, loc
     camera.count = listener.count
     camera.close = listener.close
     camera.requested_transform = transform
+    camera.original_rotation = carla.Rotation(pitch=transform.rotation.pitch, yaw=transform.rotation.yaw, roll=transform.rotation.roll)
     camera.listen(listener)
 
     return camera
@@ -161,6 +163,13 @@ def create_panoramic_cameras(configuration):
     for id in range(PANORAMIC_CAMERAS_PER_TILE): #scale * PANORAMIC_SCALE_MULTIPLIER):
         cameras += create_panoramic_camera(configuration, configuration.id + id)
     return cameras
+
+
+def jitter_camera(configuration, camera):
+    transform = camera.get_transform()
+    transform.rotation.yaw = camera.original_rotation
+    transform.rotation.yaw += min(JITTER_LIMIT, max(-JITTER_LIMIT, random.gauss(0, configuration.jitter_sigma)))
+    camera.set_transform(transform)
 
 
 def create_vehicle(configuration):
@@ -222,7 +231,12 @@ def is_complete(id, scale, cameras, duration, start_time):
     return frame_count >= duration * FPS
 
 
-def generate_tile(client, path, id, tile, scale, resolution, duration, panorama_fov):
+def tick(configuration, world, traffic_cameras):
+    jitter_camera(configuration, traffic_cameras[0])
+    world.tick()
+
+
+def generate_tile(client, path, id, tile, scale, resolution, duration, panorama_fov, jitter_sigma):
     traffic_cameras = []
     panoramic_cameras = []
     vehicles = []
@@ -248,6 +262,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration, panorama_
         resolution=resolution,
         duration=duration,
         panorama_fov=panorama_fov,
+        jitter_sigma=jitter_sigma,
         vehicle_locations=world.get_map().get_spawn_points(),
         walker_locations=Configuration.draw_n(world.get_random_location_from_navigation, tile.walkers),
         traffic_camera_locations=world.get_map().get_spawn_points(),
@@ -261,7 +276,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration, panorama_
         panoramic_cameras = create_panoramic_cameras(configuration)
 
         while not is_complete(id, scale, traffic_cameras + panoramic_cameras, duration, start_time):
-            [world.tick() for _ in range(10)]
+            [tick(configuration, world, traffic_cameras) for _ in range(10)]
 
     finally:
         logging.info('Destroying actors')
@@ -282,7 +297,7 @@ def generate_tile(client, path, id, tile, scale, resolution, duration, panorama_
     logging.info('Generation complete for tile %d', id)
 
 
-def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, seed, hostname, port, timeout):
+def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, jitter_sigma, seed, hostname, port, timeout):
     configuration = {
         'version': VERSION,
         'name': os.path.basename(path),
@@ -290,6 +305,7 @@ def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, 
         'resolution': {'width': resolution[0], 'height': resolution[1]},
         'duration': duration,
         'panorama_fov': panorama_fov,
+        'jitter': jitter_sigma,
         'seed': seed,
         'hostname': hostname,
         'port': port,
@@ -326,13 +342,13 @@ def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, 
         yaml.dump(configuration, file)
 
 
-def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, hostname='localhost', port=2000, timeout=30):
+def generate(path, tiles, scale, resolution, duration, panorama_fov, jitter_sigma=None, seed=None, hostname='localhost', port=2000, timeout=30):
     random.seed(seed)
 
     try:
         start_carla(seed)
 
-        write_configuration(path, [], scale, resolution, duration, panorama_fov, seed, hostname, port, timeout)
+        write_configuration(path, [], scale, resolution, duration, panorama_fov, jitter_sigma, seed, hostname, port, timeout)
 
         client = carla.Client(hostname, port)
         client.set_timeout(timeout)
@@ -341,8 +357,8 @@ def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, 
         for id in range(scale * TILES_SCALE_MULTIPLIER):
             used_tiles.append(random.choice(tiles))
             logging.info(used_tiles[-1])
-            write_configuration(path, used_tiles, scale, resolution, duration, panorama_fov, seed, hostname, port, timeout)
-            generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration, panorama_fov)
+            write_configuration(path, used_tiles, scale, resolution, duration, panorama_fov, jitter_sigma, seed, hostname, port, timeout)
+            generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration, panorama_fov, jitter_sigma)
 
         transcode_videos(path)
     finally:
@@ -390,6 +406,12 @@ if __name__ == '__main__':
         type=int,
         help='Field of view of panoramic cameras')
     parser.add_argument(
+        '-j', '--jitter',
+        metavar='JITTER',
+        default=1.0,
+        type=float,
+        help='Standard deviation of truncated Gaussian camera jitter (in degrees)')
+    parser.add_argument(
         '-o', '--hostname',
         default='localhost',
         help='Server engine hostname')
@@ -406,4 +428,4 @@ if __name__ == '__main__':
     if not os.path.isabs(args.path):
         args.path = os.path.join(os.environ['OUTPUT_PATH'], args.path)
 
-    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.fov, args.seed)
+    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.fov, args.jitter, args.seed)
