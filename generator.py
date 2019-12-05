@@ -326,7 +326,7 @@ def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, 
         yaml.dump(configuration, file)
 
 
-def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, hostname='localhost', port=2000, timeout=30):
+def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, vehicles=None, walkers=None, hostname='localhost', port=2000, timeout=30):
     random.seed(seed)
 
     try:
@@ -340,6 +340,10 @@ def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, 
 
         for id in range(scale * TILES_SCALE_MULTIPLIER):
             used_tiles.append(random.choice(tiles))
+            if not vehicles is None:
+                used_tiles[-1].vehicles = vehicles
+            if not walkers is None:
+                used_tiles[-1].walkers = walkers
             logging.info(used_tiles[-1])
             write_configuration(path, used_tiles, scale, resolution, duration, panorama_fov, seed, hostname, port, timeout)
             generate_tile(client, path, id, used_tiles[-1], scale, resolution, duration, panorama_fov)
@@ -384,6 +388,18 @@ if __name__ == '__main__':
         type=int,
         help='Random number generator seed')
     parser.add_argument(
+        '--vehicles',
+        metavar='VEHICLES',
+        default=None,
+        type=int,
+        help='Override tile parameters and force number of vehicles to a specific number')
+    parser.add_argument(
+        '--pedestrians',
+        metavar='PEDESTRIANS',
+        default=None,
+        type=int,
+        help='Override tile parameters and force number of pedestrians to a specific number')
+    parser.add_argument(
         '-f', '--fov',
         metavar='FOV',
         default=None,
@@ -406,4 +422,4 @@ if __name__ == '__main__':
     if not os.path.isabs(args.path):
         args.path = os.path.join(os.environ['OUTPUT_PATH'], args.path)
 
-    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.fov, args.seed)
+    generate(args.path, tile_pool, args.scale, (args.width, args.height), args.duration, args.fov, args.seed, args.vehicles, args.pedestrians)
