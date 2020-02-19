@@ -33,7 +33,7 @@ ue4-docker build --cuda=9.2 --pull-prerequisites --no-minimal --no-full --exclud
 ```sh
 git clone https://github.com/uwdb/visualroad
 cd visualroad
-docker build -t visualroad/core
+docker build -t visualroad/core .
 ```
 
 ## Synthetic Dataset Generation
