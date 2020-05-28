@@ -13,22 +13,28 @@ Because of licensing restrictions on the Unreal engine, we cannot release a pre-
 sudo apt-get install python3 python3-dev python3-pip
 ```
 
-3. Install `ue4-docker` version 0.0.34 or later:
+3. Install `nvidia-docker` version 1.0.1 or later:
+
+```sh
+sudo apt-get install nvidia-docker
+```
+
+4. Install `ue4-docker` version 0.0.34 or later:
 
 ```sh
 sudo pip3 install ue4-docker
 sudo ue4-docker setup
 ``` 
 
-4. You will need an Unreal Engine account in order for `ue4-docker` to be able to download the engine.  If you don't already have an account, [create one](https://accounts.unrealengine.com/login).
+5. You will need an Unreal Engine account in order for `ue4-docker` to be able to download the engine.  If you don't already have an account, [create one](https://accounts.unrealengine.com/login).
 
-5. Build the `ue4-engine:4.22.0` image using `ue4-docker` and CUDA version 9.2.  You will be prompted for your Unreal Engine account information from the previous step in order to build the engine:
+6. Build the `ue4-engine:4.22.0` image using `ue4-docker` and CUDA version 9.2.  You will be prompted for your Unreal Engine account information from the previous step in order to build the engine:
 
 ```sh
 ue4-docker build --cuda=9.2 --pull-prerequisites --no-minimal --no-full --exclude=debug --exclude=templates 4.22.0
 ```
 
-6. Clone the [Visual Road repository](https://github.com/uwdb/visualroad) and build the benchmark image:
+7. Clone the [Visual Road repository](https://github.com/uwdb/visualroad) and build the benchmark image:
 
 ```sh
 git clone https://github.com/uwdb/visualroad
