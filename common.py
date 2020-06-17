@@ -69,7 +69,7 @@ def start_carla(seed, fps=30, quality='Epic', executable=None):
                       '-fps=%d' % fps,
                       '-quality-level=%s' % quality,
                       '-fixedseed=%d' % int(seed)], cwd=os.path.dirname(executable))
-    time.sleep(20)
+    time.sleep(360)
 
 
 def stop_carla():
@@ -77,7 +77,7 @@ def stop_carla():
         process = next(p for p in psutil.process_iter(attrs=['name'])
                        if p.info['name'] == os.path.basename(os.environ['CARLA_EXECUTABLE']))
         process.send_signal(signal.SIGINT)
-        time.sleep(20)
+        time.sleep(360)
 
 
 def transcode_video(input_filename, output_filename):

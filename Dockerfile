@@ -14,6 +14,7 @@ ENV UNREAL_PATH=/home/ue4/UnrealEngine
 ENV UE4_ROOT $UNREAL_PATH
 
 ARG VISUALROAD_VERSION=master
+ARG VISUALROAD_REPOSITORY=https://github.com/uwdb/visualroad.git
 ENV VISUALROAD_PATH=/home/ue4/visualroad
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -85,7 +86,7 @@ RUN pip2 install --user --upgrade --ignore-installed -e $CARLA_PATH/PythonAPI/ca
     pip3 install --user --upgrade --ignore-installed -e $CARLA_PATH/PythonAPI/carla
 
 # Install Visual Road
-RUN git clone https://github.com/uwdb/visualroad.git $VISUALROAD_PATH && \
+RUN git clone $VISUALROAD_REPOSITORY $VISUALROAD_PATH && \
     cd $VISUALROAD_PATH && \
     git checkout $VISUALROAD_VERSION
 

@@ -326,7 +326,7 @@ def write_configuration(path, tiles, scale, resolution, duration, panorama_fov, 
         yaml.dump(configuration, file)
 
 
-def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, vehicles=None, walkers=None, hostname='localhost', port=2000, timeout=30):
+def generate(path, tiles, scale, resolution, duration, panorama_fov, seed=None, vehicles=None, walkers=None, hostname='localhost', port=2000, timeout=150):
     random.seed(seed)
 
     try:
