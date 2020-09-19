@@ -1,6 +1,6 @@
 # Visual Road: A Video Data Management Benchmark
 
-Please see the [project website](http://visualroad.uwdb.io) for more details about the benchmark, links to the papers, sample videos, and pregenerated datasets.
+Please see the [project website](https://db.cs.washington.edu/projects/visualroad) for more details about the benchmark, links to the papers, sample videos, and pregenerated datasets.
 
 ## Building the Visual Road Docker Image
 
