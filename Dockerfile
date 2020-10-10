@@ -71,8 +71,8 @@ RUN apt-get install -y clang-7 lld-7 && \
 USER ue4
 
 # Ensure yaml, opencv
-RUN pip2 install --user pyyaml opencv-python psutil & \
-    pip3 install --user pyyaml opencv-python psutil
+RUN pip2 install --user pyyaml opencv-python==4.0.1.24 psutil & \
+    pip3 install --user pyyaml opencv-python==4.0.1.24 psutil
 
 # Build Carla
 RUN git clone https://github.com/carla-simulator/carla $CARLA_PATH && \
